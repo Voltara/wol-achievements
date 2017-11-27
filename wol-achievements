@@ -1,0 +1,61 @@
+#! /usr/bin/env perl
+
+use strict;
+use warnings;
+
+my $dir = $ENV{HOME} . "/.config/unity3d/Asymmetric Software/West of Loathing";
+my $permaflags_file = <"$dir/permaflags-*.json">;
+defined $permaflags_file or die "Cannot find permaflags file";
+
+my $mode = shift(@ARGV) // 'have';
+unless ($mode =~ m/^(?:have|need)$/) {
+	die <<EOF;
+usage: $0 [ have | need ]
+   have - show achievements already earned (default)
+   need - show achievements needed
+EOF
+}
+
+my @data = map { chomp; [ split(' ', $_, 2) ] } <DATA>;
+my %ach_name = map { @$_ } @data;
+my @ach_list = map { $_->[0] } @data; # order preserving
+
+local $/;
+open(my $fh, "<", $permaflags_file) or die "$permaflags_file: $!";
+my %have = map { $_ => 1 } <$fh> =~ m/"__ach_([^"]+)"/g;
+close($fh);
+
+for (sort grep { !exists($ach_name{$_}) } keys %have) {
+	push @ach_list, $_;
+	$ach_name{$_} = $_;
+}
+
+for (@ach_list) {
+	next unless $mode eq 'need' xor exists $have{$_};
+	print "$ach_name{$_}\n";
+}
+
+__DATA__
+ach_darkhorse     A Real Underdog
+ach_crazyhorse    Horse Senseless
+ach_palehorse     Looking a Ghost Horse in the Mouth
+ach_dirtjail      WANTED: Alive
+ach_dirtmorgue    WANTED: Dead
+ach_noproblem     Our Daily Bread
+ach_37maplocs     In a Row?
+ach_69elvwords    KUZPA HOPA
+ach_roberto       No Country for Old Gods
+ach_donesusie     I Love the Way You Shoot
+ach_donepete      Contributing to the Delinquency of a Miner
+ach_donealice     What's Up, Doc?
+ach_donegary      Yes! Yes! To Finishing!
+ach_buffalobill   Won't you come out tonight?
+ach_curly         Meat Mystery
+ach_nortoncrown   Emperormaker
+ach_iamnecro      The Blackest Hat
+ach_thirdbridge   Three Bridges too Far
+ach_1337meat      Fistful of Cutlets
+ach_cottoncandy   The Terrible Secret of Cotton Candy
+ach_donehard      The Hard Way
+ach_donerealhard  The Really Hard Way
+ach_overdidit     Under Pressure
